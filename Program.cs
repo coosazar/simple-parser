@@ -15,11 +15,11 @@ namespace simple_parser
                 exp    := trm addsub
                 addsub := (+|-) trm addsub | muldiv
                 muldiv := (*|/) trm muldiv | lambda
-                trm    := num
+                trm    := ( exp ) | num
                 num    := [0-9](\.[0-9])?
             */
 
-            doLexer("3 + 2 * 3 + 1 / 2 - 0.5");
+            doLexer("(3 + 2 * 3 + 1) / 2 - 0.5");
 
             Console.WriteLine(String.Join(", ", _lex));
 
@@ -57,7 +57,7 @@ namespace simple_parser
                 var val = p_trm();
 
                 string p;
-                if((p = peek()) != null){
+                if((p = peek()) != null && p != SYMB_RPR){
                     val = p_muldiv(val);
                 }
 
@@ -96,7 +96,14 @@ namespace simple_parser
         }
 
         static double p_trm(){
-            return p_num();
+            var p = peek();
+            if(p != SYMB_LPR) return p_num();
+
+            next();
+            var exp = p_exp();
+            next();
+
+            return exp;
         }
 
         static double p_num() => Double.Parse(next());
@@ -106,9 +113,11 @@ namespace simple_parser
             SYMB_ADD = "+",
             SYMB_SUB = "-",
             SYMB_MUL = "*",
-            SYMB_DIV = "/";
+            SYMB_DIV = "/",
+            SYMB_LPR = "(",
+            SYMB_RPR = ")";
                 
-        static string[] _symb = new [] { SYMB_ADD, SYMB_SUB, SYMB_MUL };
+        static string[] _symb = new [] { SYMB_ADD, SYMB_SUB, SYMB_MUL, SYMB_LPR, SYMB_RPR };
 
         static List<string> _lex = null;
         static void doLexer(string exp){
@@ -119,9 +128,21 @@ namespace simple_parser
                 while(pos < exp.Length && exp[pos] == ' ') pos++;
                 var st = pos;
 
-                while(pos < exp.Length && (exp[pos] != ' ' || _symb.Contains(exp[pos]+""))) pos++;
+                var s_idx = 0;
+                for(s_idx = 0; s_idx < _symb.Length; s_idx++){
+                    var s = _symb[s_idx];
+                    if(exp.Substring(st, s.Length) == s){
+                        _lex.Add(s);
+                        pos += s.Length;
+                        break;
+                    }
+                }
 
-                _lex.Add(exp.Substring(st, pos - st));
+                if(s_idx == _symb.Length){
+                    while(pos < exp.Length && !(exp[pos] == ' ' || _symb.Contains(exp[pos]+""))) pos++;
+                    _lex.Add(exp.Substring(st, pos - st));
+                }
+
 
                 if(pos == exp.Length) break;
             }
