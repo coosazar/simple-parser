@@ -15,11 +15,11 @@ namespace simple_parser
                 exp    := trm addsub+
                 addsub := (+|-) trm | muldiv
                 muldiv := (*|/) trm | lambda
-                trm    := ( exp ) | num
+                trm    := ( exp ) | (-)? num
                 num    := [0-9](\.[0-9])?
             */
 
-            doLexer("(3 + 2 * 3 + 1) / 2 - 0.5");
+            doLexer("(3 + 2 * 3 + 1) / 2 - -0.5");
 
             Console.WriteLine(String.Join(", ", _lex));
 
@@ -109,7 +109,14 @@ namespace simple_parser
             return exp;
         }
 
-        static double p_num() => Double.Parse(next());
+        static double p_num(){
+            var sig = 1;
+
+            var n = next();
+            if(n == SYMB_SUB) { sig = -1; n = next(); }
+
+            return Double.Parse(n) * sig;
+        }
         
 
         const string
