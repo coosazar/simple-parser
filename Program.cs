@@ -12,9 +12,9 @@ namespace simple_parser
             Console.WriteLine("Hello World!");
 
             /*
-                exp    := trm addsub
-                addsub := (+|-) trm addsub | muldiv
-                muldiv := (*|/) trm muldiv | lambda
+                exp    := trm addsub+
+                addsub := (+|-) trm | muldiv
+                muldiv := (*|/) trm | lambda
                 trm    := ( exp ) | num
                 num    := [0-9](\.[0-9])?
             */
@@ -43,8 +43,11 @@ namespace simple_parser
 
         static double p_exp(){
             var num = p_trm();
-            var res = p_addsub(num);
-            return res;
+
+            string p;
+            while((p = peek()) != null && p != SYMB_RPR) num = p_addsub(num);
+            
+            return num;
         }
 
         static double p_addsub(double num){
